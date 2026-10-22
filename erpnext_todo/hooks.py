@@ -25,8 +25,8 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = "/assets/erpnext_todo/css/todo_launcher.css?v=19"
-app_include_js = "/assets/erpnext_todo/js/todo_launcher.js?v=19"
+app_include_css = "/assets/erpnext_todo/css/todo_launcher.css?v=20"
+app_include_js = "/assets/erpnext_todo/js/todo_launcher.js?v=20"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erpnext_todo/css/erpnext_todo.css"

@@ -13,6 +13,8 @@ erpnext_todo.launcher = {
 	hasOverdue: false,
 	open: false,
 	priority: null,
+	compose: false,
+	saving: false,
 	expanded: null,
 	returnToTask: false,
 	solo: false,
@@ -64,6 +66,7 @@ erpnext_todo.launcher = {
 			<div class="todo-launcher__tab" role="group" aria-expanded="false">
 				<button type="button" class="todo-launcher__icon"></button>
 				<span class="todo-launcher__counts"></span>
+				<button type="button" class="todo-launcher__add"></button>
 				<span class="todo-launcher__overdue" hidden></span>
 				<button type="button" class="todo-launcher__sound"></button>
 			</div>
@@ -77,10 +80,13 @@ erpnext_todo.launcher = {
 		this.tab = this.root.querySelector(".todo-launcher__tab");
 		this.iconBtn = this.root.querySelector(".todo-launcher__icon");
 		this.countsEl = this.root.querySelector(".todo-launcher__counts");
+		this.addBtn = this.root.querySelector(".todo-launcher__add");
 		this.overdueEl = this.root.querySelector(".todo-launcher__overdue");
 		this.soundBtn = this.root.querySelector(".todo-launcher__sound");
 		this.soundMuted = this.readSoundMuted();
 		this.iconBtn.innerHTML = frappe.utils.icon("list", "md");
+		this.addBtn.innerHTML = frappe.utils.icon("add", "sm");
+		this.addBtn.setAttribute("aria-label", __("New ToDo"));
 		this.renderSound();
 		this.collapseBtn.innerHTML = frappe.utils.icon("close", "sm");
 		this.title.textContent = __("ToDo");
@@ -162,6 +168,10 @@ erpnext_todo.launcher = {
 			this.toggleSound();
 			return;
 		}
+		if (event.target.closest(".todo-launcher__add")) {
+			this.openCompose();
+			return;
+		}
 		if (this.phase !== "open") {
 			if (this.phase === "closed") {
 				this.openPanel();
@@ -191,6 +201,8 @@ erpnext_todo.launcher = {
 			this.solo = false;
 			this.rows = [];
 			this.scrollTop = 0;
+		} else {
+			this.compose = false;
 		}
 		const token = this.beginPhase("widening");
 		this.open = false;
@@ -207,6 +219,8 @@ erpnext_todo.launcher = {
 		this.layoutCounts(true, true);
 		if (restore) {
 			this.loadAndReveal(restoreName);
+		} else if (this.compose) {
+			this.renderBody();
 		} else {
 			this.loadFirstPage();
 		}
@@ -234,9 +248,10 @@ erpnext_todo.launcher = {
 		if (this.phase !== "open") {
 			return;
 		}
-		if (!this.priority && !this.solo) {
+		if (!this.priority && !this.solo && !this.compose) {
 			return;
 		}
+		this.compose = false;
 		this.priority = null;
 		this.expanded = null;
 		this.detail = null;
@@ -256,6 +271,8 @@ erpnext_todo.launcher = {
 		if (!keepMemory) {
 			this.returnToTask = false;
 			this.expanded = null;
+			this.compose = false;
+			this.saving = false;
 			this.priority = null;
 			this.solo = false;
 			this.scrollTop = 0;
@@ -358,10 +375,14 @@ erpnext_todo.launcher = {
 		const headerHeight = header ? header.offsetHeight : 0;
 		const errorHeight = this.errorEl.hidden ? 0 : this.errorEl.offsetHeight;
 		let bodyHeight = 0;
-		for (const child of this.body.children) {
-			bodyHeight += child.offsetHeight;
+		if (this.compose) {
+			bodyHeight = 350;
+		} else {
+			for (const child of this.body.children) {
+				bodyHeight += child.offsetHeight;
+			}
+			bodyHeight = Math.min(350, Math.max(130, bodyHeight));
 		}
-		bodyHeight = Math.min(350, Math.max(130, bodyHeight));
 		return headerHeight + errorHeight + bodyHeight;
 	},
 
@@ -465,6 +486,9 @@ erpnext_todo.launcher = {
 	refreshFromEvent() {
 		this.loadCounts();
 		if (this.phase !== "open" && this.phase !== "widening" && !this.open) {
+			return;
+		}
+		if (this.compose) {
 			return;
 		}
 		if (this.solo && this.expanded) {
@@ -636,10 +660,81 @@ erpnext_todo.launcher = {
 		});
 	},
 
+	openCompose() {
+		this.compose = true;
+		this.expanded = null;
+		this.detail = null;
+		this.solo = false;
+		this.error = "";
+		this.listToken += 1;
+		this.renderTab();
+		if (this.phase === "closed") {
+			this.openPanel();
+			return;
+		}
+		if (this.phase === "open") {
+			this.renderBody();
+		}
+	},
+
+	submitCompose() {
+		if (this.saving || !this.descriptionControl) {
+			return;
+		}
+		const description = this.descriptionControl.get_value() || "";
+		const plain = description.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+		if (!plain) {
+			this.error = __("Description is required");
+			this.renderBody();
+			return;
+		}
+		const referenceType = this.referenceTypeControl.get_value() || "";
+		const referenceName = this.referenceNameControl.get_value() || "";
+		if (Boolean(referenceType) !== Boolean(referenceName)) {
+			this.error = __("Reference is incomplete");
+			this.renderBody();
+			return;
+		}
+		this.saving = true;
+		this.error = "";
+		this.renderBody();
+		const args = {
+			description,
+			priority: this.priorityControl.get_value() || "Medium",
+			allocated_to: this.allocatedControl.get_value() || frappe.session.user,
+		};
+		const date = this.dateControl.get_value();
+		if (date) {
+			args.date = date;
+		}
+		if (referenceType) {
+			args.reference_type = referenceType;
+			args.reference_name = referenceName;
+		}
+		this.call("create_todo", args)
+			.then(() => {
+				this.saving = false;
+				this.compose = false;
+				this.priority = null;
+				this.queueReady = false;
+				this.renderTab();
+				this.loadCounts();
+				if (this.phase === "open" || this.open) {
+					this.loadFirstPage();
+				}
+			})
+			.catch(() => {
+				this.saving = false;
+				this.error = __("Could not create the to-do");
+				this.renderBody();
+			});
+	},
+
 	setPriority(priority) {
 		if (this.phase !== "open") {
 			return;
 		}
+		this.compose = false;
 		this.priority = this.priority === priority ? null : priority;
 		this.expanded = null;
 		this.detail = null;
@@ -975,8 +1070,14 @@ erpnext_todo.launcher = {
 			count.setAttribute("aria-pressed", selected ? "true" : "false");
 		}
 		const showAll = this.phase === "open" && !this.priority;
-		this.iconBtn.classList.toggle("is-active", showAll);
-		this.iconBtn.setAttribute("aria-pressed", showAll ? "true" : "false");
+		this.iconBtn.classList.toggle("is-active", showAll && !this.compose);
+		this.iconBtn.setAttribute("aria-pressed", showAll && !this.compose ? "true" : "false");
+		if (this.addBtn) {
+			const adding = (this.phase === "open" || this.phase === "widening") && this.compose;
+			this.addBtn.classList.toggle("is-active", adding);
+			this.addBtn.setAttribute("aria-pressed", adding ? "true" : "false");
+		}
+		this.title.textContent = this.compose ? __("New ToDo") : __("ToDo");
 		this.overdueEl.hidden = !this.hasOverdue;
 		if (this.phase === "closing") {
 			return;
@@ -998,6 +1099,19 @@ erpnext_todo.launcher = {
 		const scroll = this.scrollTop;
 		this.errorEl.hidden = !this.error;
 		this.errorEl.textContent = this.error || "";
+		this.root.classList.toggle("is-compose", Boolean(this.compose));
+		if (this.compose) {
+			if (!this.body.querySelector(".todo-launcher__form")) {
+				this.body.replaceChildren(this.composeForm());
+			}
+			const save = this.body.querySelector(".todo-launcher__save");
+			if (save) {
+				save.disabled = this.saving;
+			}
+			this.syncPanelHeight();
+			return;
+		}
+		this.descriptionControl = null;
 		this.body.replaceChildren();
 		if (this.solo && this.detail) {
 			this.body.appendChild(this.soloCard(this.detail));
@@ -1033,6 +1147,76 @@ erpnext_todo.launcher = {
 		}
 		this.body.scrollTop = scroll;
 		this.syncPanelHeight();
+	},
+
+	fieldControl(parent, df) {
+		return frappe.ui.form.make_control({
+			parent,
+			df,
+			render_input: true,
+		});
+	},
+
+	composeForm() {
+		const form = document.createElement("form");
+		form.className = "todo-launcher__form";
+		const descriptionHost = document.createElement("div");
+		const priorityHost = document.createElement("div");
+		const dateHost = document.createElement("div");
+		const typeHost = document.createElement("div");
+		const nameHost = document.createElement("div");
+		const userHost = document.createElement("div");
+		const save = document.createElement("button");
+		save.type = "submit";
+		save.className = "btn btn-primary btn-sm todo-launcher__save";
+		save.textContent = __("Add");
+		form.append(descriptionHost, priorityHost, dateHost, typeHost, nameHost, userHost, save);
+		this.descriptionControl = this.fieldControl(descriptionHost, {
+			fieldtype: "Text Editor",
+			fieldname: "description",
+			label: __("Description"),
+			reqd: 1,
+		});
+		this.priorityControl = this.fieldControl(priorityHost, {
+			fieldtype: "Select",
+			fieldname: "priority",
+			label: __("Priority"),
+			options: PRIORITIES.join("\n"),
+		});
+		this.priorityControl.set_value("Medium");
+		this.dateControl = this.fieldControl(dateHost, {
+			fieldtype: "Date",
+			fieldname: "date",
+			label: __("Due Date"),
+		});
+		this.referenceTypeControl = this.fieldControl(typeHost, {
+			fieldtype: "Link",
+			fieldname: "reference_type",
+			label: __("Reference Type"),
+			options: "DocType",
+		});
+		this.referenceNameControl = this.fieldControl(nameHost, {
+			fieldtype: "Dynamic Link",
+			fieldname: "reference_name",
+			label: __("Reference Name"),
+			options: "reference_type",
+			get_options: () => this.referenceTypeControl.get_value(),
+		});
+		this.referenceTypeControl.df.onchange = () => {
+			this.referenceNameControl.set_value("");
+		};
+		this.allocatedControl = this.fieldControl(userHost, {
+			fieldtype: "Link",
+			fieldname: "allocated_to",
+			label: __("Allocated To"),
+			options: "User",
+		});
+		this.allocatedControl.set_value(frappe.session.user);
+		form.addEventListener("submit", (event) => {
+			event.preventDefault();
+			this.submitCompose();
+		});
+		return form;
 	},
 
 	rowCard(row) {

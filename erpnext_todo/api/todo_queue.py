@@ -93,6 +93,51 @@ def get_todo_detail(name):
 
 
 @frappe.whitelist()
+def create_todo(
+	description,
+	priority="Medium",
+	date=None,
+	reference_type=None,
+	reference_name=None,
+	allocated_to=None,
+):
+	user = _session_user()
+	description = cstr(description).strip()
+	if not strip_html(description).strip():
+		frappe.throw(frappe._("Description is required"))
+	priority = _clean_priority(priority) or "Medium"
+	due = cstr(date or "").strip() or None
+	if due and len(due) != 10:
+		frappe.throw(frappe._("Invalid date"))
+	assignee = cstr(allocated_to or "").strip() or user
+	if not frappe.db.exists("User", assignee):
+		frappe.throw(frappe._("Invalid user"))
+	ref_type = cstr(reference_type or "").strip() or None
+	ref_name = cstr(reference_name or "").strip() or None
+	if bool(ref_type) != bool(ref_name):
+		frappe.throw(frappe._("Reference is incomplete"))
+	if ref_type:
+		if not frappe.db.exists("DocType", ref_type) or frappe.get_meta(ref_type).issingle:
+			frappe.throw(frappe._("Invalid reference"))
+		if not frappe.db.exists(ref_type, ref_name):
+			frappe.throw(frappe._("Reference not found"))
+	doc = frappe.get_doc(
+		{
+			"doctype": "ToDo",
+			"description": description,
+			"priority": priority,
+			"date": due,
+			"status": "Open",
+			"allocated_to": assignee,
+			"reference_type": ref_type,
+			"reference_name": ref_name,
+		}
+	)
+	doc.insert()
+	return {"name": doc.name}
+
+
+@frappe.whitelist()
 def set_todo_status(name, status):
 	if status not in STATUSES:
 		frappe.throw(frappe._("Invalid status"))

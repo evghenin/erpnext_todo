@@ -21,6 +21,7 @@
 }
 
 .todo-launcher__icon,
+.todo-launcher__add,
 .todo-launcher__sound,
 .todo-launcher__collapse,
 .todo-launcher__summary,
@@ -91,6 +92,32 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
+}
+
+.todo-launcher__add {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 1px solid var(--border-color);
+	border-radius: 50%;
+	background: var(--fg-color, var(--control-bg));
+	color: var(--text-color);
+	flex: none;
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+.todo-launcher__add svg {
+	width: 14px;
+	height: 14px;
+}
+
+.todo-launcher.is-open .todo-launcher__add.is-active {
+	background: var(--fg-color, var(--control-bg));
+	box-shadow: inset 0 0 0 1px var(--text-color);
 }
 
 .todo-launcher__sound {
@@ -280,6 +307,12 @@
 	min-height: 130px;
 }
 
+.todo-launcher.is-compose .todo-launcher__body {
+	height: 350px;
+	min-height: 350px;
+	max-height: 350px;
+}
+
 .todo-launcher__row {
 	border-bottom: 1px solid var(--border-color);
 }
@@ -349,6 +382,26 @@
 	margin-top: 8px;
 	padding-left: 0;
 	color: var(--blue-500);
+}
+
+.todo-launcher__form {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 8px 12px 12px;
+}
+
+.todo-launcher__form .frappe-control {
+	margin-bottom: 8px;
+}
+
+.todo-launcher__form .ql-editor {
+	min-height: 140px;
+}
+
+.todo-launcher__save {
+	align-self: flex-end;
+	margin-top: 4px;
 }
 
 .todo-launcher__status-row {
@@ -449,7 +502,9 @@
 		max-height: none;
 	}
 
-	.todo-launcher.is-open .todo-launcher__body {
+	.todo-launcher.is-open .todo-launcher__body,
+	.todo-launcher.is-compose .todo-launcher__body {
+		height: auto;
 		min-height: 0;
 		max-height: none;
 	}
