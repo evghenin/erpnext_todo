@@ -1,0 +1,473 @@
+.todo-launcher {
+	position: fixed;
+	left: 16px;
+	bottom: 16px;
+	z-index: 1020;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: stretch;
+	width: max-content;
+	max-width: calc(100vw - 32px);
+	color: var(--text-color);
+	font-size: var(--text-sm, 13px);
+	transition: width 220ms ease;
+}
+
+.todo-launcher button,
+.todo-launcher select {
+	font: inherit;
+	color: inherit;
+}
+
+.todo-launcher__icon,
+.todo-launcher__sound,
+.todo-launcher__collapse,
+.todo-launcher__summary,
+.todo-launcher__reference,
+.todo-launcher__back,
+.todo-launcher__list-link {
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+}
+
+.todo-launcher__tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	width: max-content;
+	padding: 8px 12px 8px 10px;
+	border: 1px solid var(--border-color);
+	border-radius: 999px;
+	background: var(--card-bg);
+	box-shadow: var(--shadow-md, var(--shadow-sm));
+	position: relative;
+	z-index: 1;
+}
+
+.todo-launcher.is-wide .todo-launcher__tab {
+	width: 100%;
+}
+
+.todo-launcher.is-open {
+	border: 1px solid var(--border-color);
+	border-radius: 12px;
+	background: var(--card-bg);
+	box-shadow: var(--shadow-md, var(--shadow-sm));
+	overflow: hidden;
+}
+
+.todo-launcher.is-open .todo-launcher__tab {
+	border: 0;
+	border-top: 1px solid var(--border-color);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.todo-launcher__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	flex: none;
+	color: var(--text-color);
+}
+
+.todo-launcher.is-open .todo-launcher__icon.is-active {
+	background: var(--fg-color, var(--control-bg));
+	box-shadow: inset 0 0 0 1px var(--border-color);
+}
+
+.todo-launcher__icon svg {
+	width: 18px;
+	height: 18px;
+}
+
+.todo-launcher__counts {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.todo-launcher__sound {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	margin-left: auto;
+	padding: 0;
+	border-radius: 50%;
+	flex: none;
+	color: var(--text-muted);
+}
+
+.todo-launcher.is-open .todo-launcher__sound {
+	display: inline-flex;
+}
+
+.todo-launcher__sound svg {
+	width: 16px;
+	height: 16px;
+}
+
+.todo-launcher__sound.is-muted {
+	color: var(--text-color);
+}
+
+.todo-launcher__count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	overflow: hidden;
+	font-size: var(--text-base, 14px);
+	font-weight: 600;
+	line-height: 1;
+	white-space: nowrap;
+	flex: none;
+	cursor: pointer;
+	box-sizing: border-box;
+	transition: width 220ms ease, padding 220ms ease, box-shadow 180ms ease;
+}
+
+.todo-launcher__count.is-capped {
+	font-size: 12px;
+}
+
+.todo-launcher__count.is-active {
+	box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.92);
+}
+
+.todo-launcher__count.is-attention {
+	animation: todo-launcher-attention 0.55s ease-in-out 5;
+}
+
+.todo-launcher button.todo-launcher__count--high {
+	background: var(--red-500);
+	color: var(--red-50, #fff);
+}
+
+.todo-launcher button.todo-launcher__count--medium {
+	background: var(--orange-500);
+	color: var(--orange-50, #fff);
+}
+
+.todo-launcher button.todo-launcher__count--low {
+	background: var(--gray-500);
+	color: var(--gray-50, #fff);
+}
+
+.todo-launcher__dot--high {
+	color: var(--red-500);
+}
+
+.todo-launcher__dot--medium {
+	color: var(--orange-500);
+}
+
+.todo-launcher__dot--low {
+	color: var(--gray-500);
+}
+
+@keyframes todo-launcher-attention {
+	0%,
+	100% {
+		transform: scale(1);
+		filter: brightness(1);
+	}
+
+	40% {
+		transform: scale(1.16);
+		filter: brightness(1.35);
+	}
+}
+
+.todo-launcher__overdue {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--red-500);
+}
+
+.todo-launcher__panel {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	bottom: var(--bar-height, 48px);
+	height: 0;
+	overflow: hidden;
+	pointer-events: none;
+	visibility: hidden;
+	transition: height 260ms ease;
+}
+
+.todo-launcher.is-open .todo-launcher__panel {
+	position: relative;
+	left: auto;
+	bottom: auto;
+	width: auto;
+	pointer-events: auto;
+	visibility: visible;
+}
+
+.todo-launcher__sheet {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	max-height: 60vh;
+	overflow: hidden;
+	background: var(--card-bg);
+}
+
+.todo-launcher.is-open .todo-launcher__sheet {
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	background: transparent;
+	max-height: none;
+}
+
+.todo-launcher__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.todo-launcher__header {
+	justify-content: space-between;
+}
+
+.todo-launcher__title {
+	font-size: var(--text-lg);
+	font-weight: var(--weight-semibold);
+	letter-spacing: 0.015em;
+	line-height: 1.3em;
+	color: var(--heading-color);
+}
+
+.todo-launcher__collapse {
+	display: inline-flex;
+	padding: 4px;
+	border-radius: var(--border-radius, 8px);
+}
+
+.todo-launcher__error {
+	margin: 0;
+	padding: 8px 12px;
+	color: var(--red-600, var(--red-500));
+}
+
+.todo-launcher__body {
+	min-height: 0;
+	max-height: 350px;
+	flex: 1;
+	overflow-x: hidden;
+	overflow-y: scroll;
+}
+
+.todo-launcher.is-open .todo-launcher__body {
+	min-height: 130px;
+}
+
+.todo-launcher__row {
+	border-bottom: 1px solid var(--border-color);
+}
+
+.todo-launcher__row:last-child {
+	border-bottom: 0;
+}
+
+.todo-launcher__summary {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	width: 100%;
+	padding: 10px 12px;
+	text-align: left;
+}
+
+.todo-launcher__dot {
+	width: 8px;
+	height: 8px;
+	margin-top: 5px;
+	border-radius: 50%;
+	background: currentColor;
+	flex: none;
+}
+
+.todo-launcher__preview {
+	flex: 1;
+	min-width: 0;
+}
+
+.todo-launcher__date {
+	flex: none;
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+.todo-launcher__date.is-overdue {
+	color: var(--red-500);
+}
+
+.todo-launcher__detail,
+.todo-launcher__list-link,
+.todo-launcher__back {
+	padding: 0 12px 12px;
+}
+
+.todo-launcher__body > .todo-launcher__empty {
+	display: block;
+	margin: 0;
+	padding: 16px 12px;
+}
+
+.todo-launcher__html {
+	color: var(--text-color);
+	overflow-wrap: anywhere;
+}
+
+.todo-launcher__html p {
+	margin: 0 0 8px;
+}
+
+.todo-launcher__reference,
+.todo-launcher__list-link,
+.todo-launcher__back {
+	display: inline-flex;
+	margin-top: 8px;
+	padding-left: 0;
+	color: var(--blue-500);
+}
+
+.todo-launcher__status-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 10px;
+}
+
+.todo-launcher__status {
+	display: block;
+	padding: 2px 6px;
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius, 8px);
+	background: var(--card-bg);
+	color: var(--text-color);
+}
+
+.todo-launcher__open-doc {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--border-radius, 8px);
+	background: transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.todo-launcher__open-doc svg {
+	width: 14px;
+	height: 14px;
+}
+
+.todo-launcher__empty,
+.todo-launcher__loading {
+	color: var(--text-muted);
+}
+
+.todo-launcher__body > .todo-launcher__loading:only-child {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	min-height: 130px;
+	margin: 0;
+}
+
+.todo-launcher__dots {
+	display: inline-block;
+	width: 1.5em;
+	text-align: left;
+}
+
+.todo-launcher__dots::after {
+	content: ".";
+	animation: todo-launcher-dots 1.2s steps(1, end) infinite;
+}
+
+@keyframes todo-launcher-dots {
+	0% {
+		content: ".";
+	}
+
+	33% {
+		content: "..";
+	}
+
+	66%,
+	100% {
+		content: "...";
+	}
+}
+
+.todo-launcher__more {
+	height: 1px;
+}
+
+@media (max-width: 768px) {
+	.todo-launcher.is-open {
+		inset: 0;
+		width: auto !important;
+		max-width: none;
+		border-radius: 0;
+	}
+
+	.todo-launcher.is-open .todo-launcher__panel {
+		flex: 1;
+		height: auto !important;
+		min-height: 0;
+	}
+
+	.todo-launcher.is-open .todo-launcher__sheet {
+		height: 100%;
+		max-height: none;
+	}
+
+	.todo-launcher.is-open .todo-launcher__body {
+		min-height: 0;
+		max-height: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.todo-launcher,
+	.todo-launcher__panel,
+	.todo-launcher__count {
+		transition: none;
+	}
+
+	.todo-launcher__count.is-attention {
+		animation: none;
+	}
+
+	.todo-launcher__dots::after {
+		animation: none;
+		content: "...";
+	}
+}

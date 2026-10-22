@@ -25,8 +25,8 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/erpnext_todo/css/erpnext_todo.css"
-# app_include_js = "/assets/erpnext_todo/js/erpnext_todo.js"
+app_include_css = "/assets/erpnext_todo/css/todo_launcher.css?v=17"
+app_include_js = "/assets/erpnext_todo/js/todo_launcher.js?v=17"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erpnext_todo/css/erpnext_todo.css"
@@ -137,13 +137,13 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"ToDo": {
+		"after_insert": "erpnext_todo.api.todo_queue.on_todo_change",
+		"on_update": "erpnext_todo.api.todo_queue.on_todo_change",
+		"on_trash": "erpnext_todo.api.todo_queue.on_todo_change",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
